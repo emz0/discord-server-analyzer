@@ -15,9 +15,9 @@ async def on_ready():
 
 @client.event
 async def on_message(message):
-    print(message.author)
-    if message.content.startswith('<:what:357486247746207745>') and str(message.author) == 'claay#4176':
-        #await client.delete_message(message)
+    print(message.content)
+    if message.content.startswith('-') and str(message.author) == 'claay#4176':
+        await client.delete_message(message)
         with open(str(message.channel)+'_messages.txt', 'a') as the_file:
             async for log in client.logs_from(message.channel, limit=1000000000000000):
                   stringTime = log.timestamp.strftime("%Y-%m-%d %H:%M:%S")
@@ -26,11 +26,12 @@ async def on_message(message):
                   except:
                       author = ''                
                   try:
-                      mentions = log.raw_mentions
+                      mentions = [m.name+'#'+m.discriminator for m in log.mentions]
                   except:
                       mentions = []
                   
-                  message = str(log.content.replace('\n',' ').replace('&','& '))
+                message = str(log.content.replace('\n',' ').replace('&','& '))
+
 
                   template = '{server_id}&&&{channel_id}&&&{id}&&&{stringTime}&&&{author}&&&{message}&&&{mentions}\n'
                   try:

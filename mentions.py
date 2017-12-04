@@ -8,7 +8,10 @@ def mentions():
         message = file.readline()
         while message:
             message = message[:-1].split('&&&')
-            author, mentions = message[4], eval(message[6])
+            try:
+                author, mentions = message[4], eval(message[6])
+            except:
+                print(message)
             if author not in all_mentions:
                     all_mentions[author] = {}
             for m in mentions:
@@ -89,11 +92,22 @@ def global_emotes():
                     g_emotes[e_id]['count'] += 1
             message = file.readline()
     
-    g_emotes =sorted(g_emotes.items(), key=lambda x: x[1]['count'],reverse=True)
+    g_emotes = sorted(g_emotes.items(), key=lambda x: x[1]['count'],reverse=True)
     return g_emotes
 
-ems = global_emotes()
-print(ems)
+#ems = global_emotes()
+mentions = mentions()
+m_csv = []
+for k, v in mentions.items():
+    for kk, vv in v.items():
+        m_csv.append((k,kk,vv))
+import csv
+
+with open('edges.csv','w') as out:
+    csv_out=csv.writer(out)
+    csv_out.writerow(['from','to','weight'])
+    for row in m_csv:
+        csv_out.writerow(row)
 
 
     
