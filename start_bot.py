@@ -1,9 +1,59 @@
 import discord
 import asyncio
 import os
+import json
+from db.client import PGClient
 
 client = discord.Client()
 
+pg_client = PGClient()
+
+
+def parse_custom_emoji(emoji):
+    return emoji[:-1].split(':')[1:]    #return emoji_name, emoji_id
+
+
+async def reactions_to_dict(reactions):
+    reactions_dict = []
+    for r in reactions:
+        r_members = []
+        if r.custom_emoji:
+            emoji = r.emoji.name + '#' + r.emoji.id                
+        else:
+            emoji = r.emoji
+
+        members = await client.get_reaction_users(r, limit=100)
+        members = [m.name + '#' + m.discriminator for m in members]
+
+        reactions_dict.append({'message_id': r.message.id,
+                          'emoji': emoji,
+                          'members': members,
+                         })
+    return reactions_dict
+
+async def save_messages(server_id, channels=[]):
+    server = client.get_server(server_id)
+    all_channels = []
+    if channels:
+        for c in server.channels:
+            if str(c) in channels:
+                all_channels.append(c)
+    else:
+        all_channels = server.channels
+    
+    for c in all_channels:
+        async for log in client.logs_from(c, limit=1000000000):
+            stringTime = log.timestamp.strftime("%Y-%m-%d %H:%M:%S")
+            author_name = log.author.name + '#' + log.author.discriminator
+            author_id = log.author.id
+            mentions = [m.name+'#'+m.discriminator for m in log.mentions]
+            content = str(log.content)
+            reactions = await reactions_to_dict(log.reactions)
+            pg_client.insert_message(log.id,log.channel.server.id, log.channel.id,
+                                   stringTime, author_id, author_name, content,
+                                   mentions)
+            pg_client.insert_member(author_id, author_name)
+            pg_client.insert_reactions(reactions)
 
 @client.event
 async def on_ready():
@@ -11,46 +61,10 @@ async def on_ready():
     print(client.user.name)
     print(client.user.id)
     print('------')
+    await save_messages('263420076919750676',['general'])
+    print("DONE!")
+    client.logout()
     #get_msgs()
 
-@client.event
-async def on_message(message):
-    print(message.content)
-    if message.content.startswith('-') and str(message.author) == 'claay#4176':
-        await client.delete_message(message)
-        with open(str(message.channel)+'_messages.txt', 'a') as the_file:
-            async for log in client.logs_from(message.channel, limit=1000000000000000):
-                  stringTime = log.timestamp.strftime("%Y-%m-%d %H:%M:%S")
-                  try:
-                      author = log.author
-                  except:
-                      author = ''                
-                  try:
-                      mentions = [m.name+'#'+m.discriminator for m in log.mentions]
-                  except:
-                      mentions = []
-                  
-                message = str(log.content.replace('\n',' ').replace('&','& '))
 
-
-                  template = '{server_id}&&&{channel_id}&&&{id}&&&{stringTime}&&&{author}&&&{message}&&&{mentions}\n'
-                  try:
-                      the_file.write(template.format(server_id=str(log.channel.server.id),
-                                                     channel_id=str(log.channel.id),
-                                                     id=log.id, stringTime=stringTime,
-                                                     author=author, message=message,
-                                                     mentions=mentions))
-                  except:
-                      author = log.author.discriminator
-                      the_file.write(template.format(server_id=str(log.channel.server.id),
-                                                     channel_id=str(log.channel.id),
-                                                     id=log.id, stringTime=stringTime,
-                                                     author=author, message=message,
-                                                     mentions=mentions))
-#                   print(template.format(server_id=str(log.channel.server.id),
-#                                                      channel_id=str(log.channel.id),
-#                                                      id=log.id, stringTime=stringTime,
-#                                                      author=author, message=message,
-#                                                      mentions=mentions))
-
-client.run(os.environ.get('discord_token'), bot=False)
+client.run('token', bot=False)

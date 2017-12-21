@@ -10,20 +10,41 @@ class Migration:
         self.con.autocommit = True
         self.cur = self.con.cursor()
 
-    def create_table_messages(self):
+    def create_tables(self):
         table_message = """
             CREATE TABLE messages (
                 id BIGINT PRIMARY KEY NOT NULL,
                 server_id BIGINT NOT NULL,
                 channel_id BIGINT NOT NULL,
                 posted_at TIMESTAMP NOT NULL,
-                author VARCHAR(64) NOT NULL,
+                author_id BIGINT NOT NULL,
+                author_name VARCHAR(64) NOT NULL,
                 content TEXT,
                 mentions VARCHAR[]
             )
         """
+
+        table_reactions = """
+            CREATE TABLE reactions (
+                id SERIAL PRIMARY KEY NOT NULL,
+                message_id BIGINT NOT NULL,
+                emoji VARCHAR(64) NOT NULL,
+                members VARCHAR[]
+            )
+        """
+
+        table_members = """
+            CREATE TABLE members (
+                id BIGINT PRIMARY KEY NOT NULL,
+                name VARCHAR(64)
+            )
+        """
         self.cur.execute("DROP TABLE IF EXISTS messages")
+        self.cur.execute("DROP TABLE IF EXISTS reactions")
+        self.cur.execute("DROP TABLE IF EXISTS members")
         self.cur.execute(table_message)
+        self.cur.execute(table_reactions)
+        self.cur.execute(table_members)
 
     def import_messages(self, filepath='general_messages.txt'):
         with open('general_messages.txt', 'r') as file:
@@ -45,8 +66,8 @@ class Migration:
                 message = file.readline()
 
     def run(self, import_data=True):
-        self.create_table_messages()
-        self.import_messages()
+        self.create_tables()
+        #self.import_messages()
 
 m = Migration()
 m.run()
