@@ -42,17 +42,18 @@ async def save_messages(server_id, channels=[]):
         all_channels = server.channels
     
     for c in all_channels:
-        async for log in client.logs_from(c, limit=1000000000):
+        async for log in client.logs_from(c, limit=1000000):
             stringTime = log.timestamp.strftime("%Y-%m-%d %H:%M:%S")
-            author_name = log.author.name + '#' + log.author.discriminator
+            author_name = log.author.name
             author_id = log.author.id
+            discriminator = log.author.discriminator
             mentions = [m.name+'#'+m.discriminator for m in log.mentions]
             content = str(log.content)
             reactions = await reactions_to_dict(log.reactions)
             pg_client.insert_message(log.id,log.channel.server.id, log.channel.id,
                                    stringTime, author_id, author_name, content,
                                    mentions)
-            pg_client.insert_member(author_id, author_name)
+            pg_client.insert_member(author_id, author_name, discriminator)
             pg_client.insert_reactions(reactions)
 
 @client.event

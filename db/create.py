@@ -36,7 +36,8 @@ class Migration:
         table_members = """
             CREATE TABLE members (
                 id BIGINT PRIMARY KEY NOT NULL,
-                name VARCHAR(64)
+                name VARCHAR(64),
+                discriminator INT
             )
         """
         self.cur.execute("DROP TABLE IF EXISTS messages")
