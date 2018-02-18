@@ -10,9 +10,13 @@ class PGClient:
                               password=password, dbname=dbname)
         self.con.autocommit = True
 
-    def query(self, q):
+    def query(self, q, values=None):
         cursor = self.con.cursor()
-        cursor.execute(q)
+        if values:
+            cursor.execute(q, values)
+        else:
+            cursor.execute(q)
+
         return cursor
 
     def save_message(self, *values):

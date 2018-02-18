@@ -55,3 +55,6 @@ ACTIVE_DAYS = """
             FROM messages GROUP BY day_group
             ORDER BY day_group
 """
+
+MOST_USED_EMOTES = """
+"""
