@@ -17,10 +17,9 @@ class Migration:
                 server_id BIGINT NOT NULL,
                 channel_id BIGINT NOT NULL,
                 posted_at TIMESTAMP NOT NULL,
-                author_id BIGINT NOT NULL,
-                author_name VARCHAR(64) NOT NULL,
+                member_id BIGINT NOT NULL,
                 content TEXT,
-                mentions VARCHAR[]
+                mentions BIGINT[]
             )
         """
 
@@ -29,7 +28,7 @@ class Migration:
                 id SERIAL PRIMARY KEY NOT NULL,
                 message_id BIGINT NOT NULL,
                 emoji VARCHAR(64) NOT NULL,
-                members VARCHAR[]
+                members BIGINT[]
             )
         """
 
@@ -40,12 +39,27 @@ class Migration:
                 discriminator INT
             )
         """
-        self.cur.execute("DROP TABLE IF EXISTS messages")
-        self.cur.execute("DROP TABLE IF EXISTS reactions")
-        self.cur.execute("DROP TABLE IF EXISTS members")
-        self.cur.execute(table_message)
-        self.cur.execute(table_reactions)
-        self.cur.execute(table_members)
+
+        table_emotes = """
+            CREATE TABLE emotes (
+                id SERIAL PRIMARY KEY NOT NULL,
+                emote_id BIGINT NOT NULL,
+                member_id BIGINT NOT NULL,
+                name VARCHAR(32),
+                posted_at TIMESTAMP NOT NULL,
+                count INT DEFAULT 1
+            )
+        """
+
+        # self.cur.execute("DROP TABLE IF EXISTS messages")
+        # self.cur.execute("DROP TABLE IF EXISTS reactions")
+        # self.cur.execute("DROP TABLE IF EXISTS members")
+        self.cur.execute("DROP TABLE IF EXISTS emotes")
+        # self.cur.execute(table_message)
+        # self.cur.execute(table_reactions)
+        # self.cur.execute(table_members)
+        self.cur.execute(table_emotes)
+
 
     def import_messages(self, filepath='general_messages.txt'):
         with open('general_messages.txt', 'r') as file:
@@ -68,7 +82,6 @@ class Migration:
 
     def run(self, import_data=True):
         self.create_tables()
-        #self.import_messages()
 
 m = Migration()
 m.run()
