@@ -85,17 +85,18 @@ class DiscussionAnalyzer:
 
     def split_by_len(self, text):
         max_len = self.MAX_PIECE_LEN
-        i = 0
+        current_len = 0
         text_piece = ''
         texts = []
         for w in text.split(' '):
-            if (i + len(w)) <= max_len:
+            if (current_len + len(w)) <= max_len:
                 text_piece += w + ' '
             else:
-                texts.append(re.sub('\s+', ' ', text_piece).strip())
+                texts.append(text_piece.strip())
                 text_piece = w + ' '
-            i = len(text_piece)
-        texts.append(re.sub('\s+', ' ', text_piece).strip())
+            current_len = len(text_piece)
+        texts.append(text_piece.strip())
+
         return texts
 
     def scale_to_one(self, feelings):
