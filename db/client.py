@@ -62,19 +62,19 @@ class PGClient:
             members = '{{{}}}'.format(','.join(r['members']))
             reaction_exists = cursor.execute("""SELECT id FROM reactions
                                              WHERE message_id = %s
-                                             AND emoji = %s""",
-                                             (r['message_id'], r['emoji']))
+                                             AND emote_id = %s""",
+                                             (r['message_id'], r['emote_id']))
             reaction_exists = cursor.fetchone()
             if reaction_exists:
                 cursor.execute("""UPDATE reactions
-                               SET members = %s 
+                               SET members = %s
                                  WHERE id = %s""",
                                (members, reaction_exists[0]))
 
             else:
-                cursor.execute("""INSERT INTO reactions (message_id, emoji,
+                cursor.execute("""INSERT INTO reactions (message_id, emote_id,
                                members) VALUES (%s, %s, %s)""",
-                               (r['message_id'], r['emoji'], members))
+                               (r['message_id'], r['emote_id'], members))
 
     def save_emotes(self, emotes):
         cursor = self.con.cursor()

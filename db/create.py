@@ -27,7 +27,7 @@ class Migration:
             CREATE TABLE reactions (
                 id SERIAL PRIMARY KEY NOT NULL,
                 message_id BIGINT NOT NULL,
-                emoji VARCHAR(64) NOT NULL,
+                emote_id VARCHAR(64) NOT NULL,
                 members BIGINT[]
             )
         """

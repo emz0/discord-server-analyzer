@@ -19,15 +19,15 @@ class ContentExtractor:
         for r in reactions:
             r_members = []
             if r.custom_emoji:
-                emoji = r.emoji.name + '#' + r.emoji.id
+                emote = r.emoji.id
             else:
-                emoji = r.emoji
+                emote = r.emoji
 
             members = await self.discord_client.get_reaction_users(r, limit=100)
             members = [m.id for m in members]
 
             reactions_dict.append({'message_id': r.message.id,
-                            'emoji': emoji,
+                            'emote_id': emote,
                             'members': members,
                             })
         return reactions_dict
