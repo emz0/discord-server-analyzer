@@ -1,13 +1,12 @@
 import psycopg2 as pg
 import re
+import settings
 
 
 class PGClient:
 
-    def __init__(self, user='postgres', host='localhost',
-                 password='123456', dbname='jh'):
-        self.con = pg.connect(user=user, host=host,
-                              password=password, dbname=dbname)
+    def __init__(self):
+        self.con = pg.connect(settings.DB_CONNECTION)
         self.con.autocommit = True
 
     def query(self, q, values=None):
