@@ -17,7 +17,7 @@ class DiscussionAnalyzer:
 
     def __init__(self):
         self.IGNORED_MEMBER_IDS = settings.IGNORED_MEMBER_IDS
-        self.client = PGClient()
+        self.db_client = PGClient()
         self.MAX_PIECE_LEN = 3000
         self.init_regex_patterns()
         set_api_key(os.environ.get('PARALLELDOTS_API_KEY'))
@@ -59,7 +59,7 @@ class DiscussionAnalyzer:
                         ORDER BY id"""
 
         values = (self.IGNORED_MEMBER_IDS, first_id, last_id)
-        cursor = self.client.query(q_messages, values)
+        cursor = self.db_client.query(q_messages, values)
 
         if by_member:
             messages = {}
@@ -158,24 +158,43 @@ class DiscussionAnalyzer:
                 ]
         return result
 
+    def _member_name_by_id(self, member_id):
+        q = "SELECT name FROM members WHERE id = %s"
+        cursor = self.db_client.query(q, (member_id,))
+        name = cursor.fetchone()[0]
+
+        return name
+
     def _analyze_by_member(self, first_id, last_id):
         member_d = self.get_messages(first_id, last_id, by_member=True)
-        feelings = {}
+        results = []
         for member_id, d in member_d.items():
-            d = self.split_by_len(
-                                  self.clean(
-                                    self.extract_body(d)))
-            feelings[member_id] = self.get_feelings(d)
+            d =  self.clean(self.extract_body(d))
+            num_of_characters = len(d)
+            d = self.split_by_len(d)
 
-        return feelings
+            feelings = self.get_feelings(d)
+
+            if not results:
+                header = ('member_id', 'member_name', 'num_of_characters') + feelings[0]
+                results.append(header)
+
+            member_name = self._member_name_by_id(member_id)
+            row = (member_id, member_name, num_of_characters) + feelings[1]
+
+            results.append(row)
+
+        return results
 
     def _analyze(self, first_id, last_id):
         d = self.get_messages(first_id, last_id)
-        d = self.split_by_len(
-                self.clean(
-                    self.extract_body(d)))
-        print("len of d:"+str(len(d)))
+        d = self.clean(self.extract_body(d))
+        num_of_characters = len(d)
+        d = self.split_by_len(d)
+
         feelings = self.get_feelings(d)
+        header = ('num_of_characters',) + feelings[0]
+        feelings[1] = (num_of_characters,) + feelings[1]
         return feelings
 
     def analyze(self, first_id, last_id, by_member=False):
