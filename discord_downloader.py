@@ -24,10 +24,10 @@ class DiscordDownloader:
         else:
             chosen_channels = server.channels
 
-        i = 1
+        i = 0
         for c in chosen_channels:
             print('Downloading messages from channel ' + str(c) + '...')
-            c_i = 1
+            c_i = 0
             async for log in client.logs_from(c, limit=1000000000):
                 await extractor.extract_content(log)
 
