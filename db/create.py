@@ -43,7 +43,7 @@ class Migration:
         table_emotes = """
             CREATE TABLE emotes (
                 id SERIAL PRIMARY KEY NOT NULL,
-                emote_id BIGINT NOT NULL,
+                emote_id VARCHAR(64) NOT NULL,
                 member_id BIGINT NOT NULL,
                 name VARCHAR(32),
                 posted_at TIMESTAMP NOT NULL,
