@@ -1,39 +1,28 @@
 import discord
 import asyncio
-from content_extractor import ContentExtractor
+import settings
+from discord_downloader import DiscordDownloader
 
 client = discord.Client()
 
-async def save_messages(server_id, channels=[]):
-    server = client.get_server(server_id)
-    extractor = ContentExtractor(client)
-    all_channels = []
-    if channels:
-        for c in server.channels:
-            if str(c) in channels:
-                all_channels.append(c)
-    else:
-        all_channels = server.channels
-
-    i = 1
-    for c in all_channels:
-        async for log in client.logs_from(c, limit=1000000000):
-            await extractor.extract_content(log)
-
-            if i % 1000 == 0:
-                print(i)
-            i += 1
 
 @client.event
 async def on_ready():
+    server_id = settings.DISCORD_SERVER_ID
+    channels = settings.DISCORD_CHANNELS
     print('Logged in as')
     print(client.user.name)
     print(client.user.id)
     print('------')
-    await save_messages('263420076919750676', ['general', 'mapping', 'pokemon', 'esports', 'nsfw'])
+    # client.close()
+    downloader = DiscordDownloader(client,
+                                   server_id,
+                                   [c['id'] for c in channels],
+                                   )
+
+    await downloader.save_messages()
+
     print("DONE!")
-    client.logout()
-    #get_msgs()
+    client.close()
 
-
-client.run('token', bot=False)
+client.run("--key--", bot=False)
