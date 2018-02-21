@@ -1,21 +1,20 @@
 import settings
 from db.client import PGClient
-import queries as qs
 from discussions import DiscussionAnalyzer
 
 
-class DiscordStats:
+class SQLStats:
 
     def __init__(self):
         self.client = PGClient()
 
-    def _query_stats(self, q):
-        cursor = self.client.query(q)
+    def query_stats(self, q, values):
+        cursor = self.client.query(q, values)
         column_names = list(zip(*cursor.description))[0]
 
         return [column_names, *cursor.fetchall()]
 
-    def most_reactions(self, limit):
+    def most_reacting(self, limit):
         q = """
             WITH members_count AS (
                 SELECT unnest(members) AS member_id, count(*) r_count
@@ -25,16 +24,19 @@ class DiscordStats:
             SELECT m.name, mc.r_count
             FROM members_count mc
             JOIN members m ON m.id = mc.member_id
-            WHERE mc.member_id IN %s
+            WHERE mc.member_id NOT IN %s
             ORDER BY r_count DESC
             LIMIT %s
         """
-        res = self.client.query(q, (settings.IGNORED_MEMBER_IDS, limit))
-        column_names = list(zip(*cursor.description))[0]
+        return self.query_stats(q, (settings.IGNORED_MEMBER_IDS, limit))
 
-        return [column_names, res.fetchall()]
+    def most_reacted(self, limit, order_by_i=0):
+        order_by_cols = ['num_of_reactions', 'ratio']
+        if order_by_i == 0:
+            order_by = order_by_cols[0]
+        else:
+            order_by = order_by_cols[1]
 
-    def most_reacted(self, limit):
         q = """
             WITH reaction_count AS (
                 SELECT sum(cardinality(r.members)) AS num_of_reactions,
@@ -55,52 +57,46 @@ class DiscordStats:
             JOIN members m ON m.id = rc.member_id
             WHERE rc.member_id NOT IN %s
             AND mc.num_of_messages >= 10
-            ORDER BY ratio DESC
+            ORDER BY {} DESC
             LIMIT %s
-        """
-        res = self.client.query(q, (settings.IGNORED_MEMBER_IDS, limit))
-        column_names = list(zip(*cursor.description))[0]
+        """.format(order_by)
 
-        return [column_names, res.fetchall()]
+        return self.query_stats(q, (settings.IGNORED_MEMBER_IDS, limit))
 
     def activity_trend(self):
         q = """
-            SELECT extract(month from posted_at)::int AS m, 
-                   extract(year from posted_at)::int AS y, 
+            SELECT extract(month from posted_at)::int AS m,
+                   extract(year from posted_at)::int AS y,
                    count(*)
             FROM messages
             WHERE member_id NOT IN %s
             GROUP BY y, m
             ORDER BY y,m
         """
-        res = self.client.query(q, (settings.IGNORED_MEMBER_IDS))
-        column_names = list(zip(*cursor.description))[0]
 
-        return [column_names, res.fetchall()]
+        return self.query_stats(q, (settings.IGNORED_MEMBER_IDS,))
 
     def active_hours(self):
         q = """
             SELECT extract(hour from posted_at)::int AS hour_group, count(*)
-            FROM messages GROUP BY hour_group
+            FROM messages
             WHERE member_id NOT IN %s
+            GROUP BY hour_group
             ORDER BY hour_group
             """
-        res = self.client.query(q, (settings.IGNORED_MEMBER_IDS))
-        column_names = list(zip(*cursor.description))[0]
 
-        return [column_names, res.fetchall()]
+        return self.query_stats(q, (settings.IGNORED_MEMBER_IDS,))
 
     def active_days(self):
         q = """
             SELECT extract(isodow from posted_at)::int AS day_group, count(*)
-            FROM messages GROUP BY day_group
+            FROM messages
             WHERE member_id NOT IN %s
+            GROUP BY day_group
             ORDER BY day_group
             """
-        res = self.client.query(q, (settings.IGNORED_MEMBER_IDS))
-        column_names = list(zip(*cursor.description))[0]
 
-        return [column_names, res.fetchall()]
+        return self.query_stats(q, (settings.IGNORED_MEMBER_IDS,))
 
     def most_used_emotes(self, limit):
         q = """
@@ -132,21 +128,36 @@ class DiscordStats:
                 ORDER BY total DESC
                 LIMIT %s
         """
-        ignored_m = settings.IGNORED_MEMBER_IDS
-        values = (ignored_m, ignored_m, ignored_m, limit)
-        res = self.client.query(q, values)
-        column_names = list(zip(*cursor.description))[0]
+        ignored_m = 3 * (settings.IGNORED_MEMBER_IDS,)
+        values = (*ignored_m, limit)
 
-        return [column_names, res.fetchall()]
+        return self.query_stats(q, values)
 
-        def most_active_member(self, limit):
-            q = """-
-            """
+    def most_active_member(self, limit):
+        q = """
+        SELECT member_id, mbr.name, count(*)
+        FROM messages m
+        JOIN members mbr ON mbr.id = m.member_id
+        WHERE m.member_id NOT IN %s
+        GROUP BY m.member_id, mbr.name
+        ORDER BY count DESC
+        LIMIT %s
+        """
 
-        def most_popular_member(self, limit):
-            q = """
-            """
+        return self.query_stats(q, (settings.IGNORED_MEMBER_IDS, limit))
 
-    def run(self):
-        active_stats_queries = settings.ACTIVE_STATS
-        #print(self._query_stats(active_stats_queries[0]))
+    def most_mentioned_member(self, limit):
+        q = """
+        WITH u_mentions AS (
+            SELECT unnest(mentions) as _member_id, count(*)
+            FROM messages
+            GROUP BY _member_id
+        )
+        SELECT mbr.name, u.* FROM u_mentions u
+        JOIN members mbr ON mbr.id = u._member_id
+        WHERE u._member_id NOT IN %s
+        ORDER BY u.count DESC
+        LIMIT %s
+        """
+
+        return self.query_stats(q, (settings.IGNORED_MEMBER_IDS, limit))
