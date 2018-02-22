@@ -7,6 +7,7 @@ class SQLStats:
 
     def __init__(self):
         self.client = PGClient()
+        self.limit = settings.RESULT_LIMIT
 
     def query_stats(self, q, values):
         cursor = self.client.query(q, values)
@@ -14,7 +15,7 @@ class SQLStats:
 
         return [column_names, *cursor.fetchall()]
 
-    def most_reacting(self, limit):
+    def most_reacting(self):
         q = """
             WITH members_count AS (
                 SELECT unnest(members) AS member_id, count(*) r_count
@@ -28,9 +29,9 @@ class SQLStats:
             ORDER BY r_count DESC
             LIMIT %s
         """
-        return self.query_stats(q, (settings.IGNORED_MEMBER_IDS, limit))
+        return self.query_stats(q, (settings.IGNORED_MEMBER_IDS, self.limit))
 
-    def most_reacted(self, limit, order_by_i=0):
+    def most_reacted(self, order_by_i=0):
         order_by_cols = ['num_of_reactions', 'ratio']
         if order_by_i == 0:
             order_by = order_by_cols[0]
@@ -61,7 +62,7 @@ class SQLStats:
             LIMIT %s
         """.format(order_by)
 
-        return self.query_stats(q, (settings.IGNORED_MEMBER_IDS, limit))
+        return self.query_stats(q, (settings.IGNORED_MEMBER_IDS, self.limit))
 
     def activity_trend(self):
         q = """
@@ -98,7 +99,7 @@ class SQLStats:
 
         return self.query_stats(q, (settings.IGNORED_MEMBER_IDS,))
 
-    def most_used_emotes(self, limit):
+    def most_used_emotes(self):
         q = """
             WITH _emotes AS (
                 SELECT lower(name) AS e_name, sum(count) AS e_count
@@ -129,11 +130,11 @@ class SQLStats:
                 LIMIT %s
         """
         ignored_m = 3 * (settings.IGNORED_MEMBER_IDS,)
-        values = (*ignored_m, limit)
+        values = (*ignored_m, self.limit)
 
         return self.query_stats(q, values)
 
-    def most_active_member(self, limit):
+    def most_active_member(self):
         q = """
         SELECT member_id, mbr.name, count(*)
         FROM messages m
@@ -144,9 +145,9 @@ class SQLStats:
         LIMIT %s
         """
 
-        return self.query_stats(q, (settings.IGNORED_MEMBER_IDS, limit))
+        return self.query_stats(q, (settings.IGNORED_MEMBER_IDS, self.limit))
 
-    def most_mentioned_member(self, limit):
+    def most_mentioned_member(self):
         q = """
         WITH u_mentions AS (
             SELECT unnest(mentions) as _member_id, count(*)
@@ -160,4 +161,4 @@ class SQLStats:
         LIMIT %s
         """
 
-        return self.query_stats(q, (settings.IGNORED_MEMBER_IDS, limit))
+        return self.query_stats(q, (settings.IGNORED_MEMBER_IDS, self.limit))
