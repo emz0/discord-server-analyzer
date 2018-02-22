@@ -20,9 +20,11 @@ ANALYZE_DISCUSSIONS = True
 DISCUSSIONS = [
     {'name': 'd1',
      'channel_id': 263420076919750676,
-     'first_msg_id': 372759366392348683,
-     'last_msg_id': 372782278138396673,
+     'first_id': 372759366392348683,
+     'last_id': 372782278138396673,
     }
 ]
+
+RESULT_LIMIT = 30
 
 OUTPUT_DIR = 'output'

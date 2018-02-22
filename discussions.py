@@ -15,7 +15,13 @@ from paralleldots import set_api_key, get_api_key, sentiment, similarity, emotio
 
 class DiscussionAnalyzer:
 
-    def __init__(self):
+    def __init__(self, channel_id,
+                 first_id, last_id, type):
+        self.channel_id = channel_id
+        self.first_id = first_id
+        self.last_id = last_id
+        self.type = type
+
         self.IGNORED_MEMBER_IDS = settings.IGNORED_MEMBER_IDS
         self.db_client = PGClient()
         self.MAX_PIECE_LEN = 3000
@@ -47,18 +53,19 @@ class DiscussionAnalyzer:
 
         return t.strip()
 
-    def get_messages(self, first_id, last_id, by_member=False):
+    def get_messages(self, by_member=False):
         q_messages = """SELECT json_build_object(
                             'id',id,'posted_at',posted_at,
                             'content',content, 'member_id', member_id)
                         FROM messages
-                        WHERE channel_id = 263420076919750676
+                        WHERE channel_id = %s
                         AND member_id NOT IN %s
                         AND id >= %s
                         AND id <= %s
                         ORDER BY id"""
 
-        values = (self.IGNORED_MEMBER_IDS, first_id, last_id)
+        values = (self.channel_id, self.IGNORED_MEMBER_IDS,
+                  self.first_id, self.last_id)
         cursor = self.db_client.query(q_messages, values)
 
         if by_member:
@@ -165,11 +172,11 @@ class DiscussionAnalyzer:
 
         return name
 
-    def _analyze_by_member(self, first_id, last_id):
-        member_d = self.get_messages(first_id, last_id, by_member=True)
+    def _analyze_by_member(self):
+        member_d = self.get_messages(by_member=True)
         results = []
         for member_id, d in member_d.items():
-            d =  self.clean(self.extract_body(d))
+            d = self.clean(self.extract_body(d))
             num_of_characters = len(d)
             d = self.split_by_len(d)
 
@@ -186,22 +193,24 @@ class DiscussionAnalyzer:
 
         return results
 
-    def _analyze(self, first_id, last_id):
-        d = self.get_messages(first_id, last_id)
+    def _analyze(self):
+        d = self.get_messages()
         d = self.clean(self.extract_body(d))
         num_of_characters = len(d)
         d = self.split_by_len(d)
 
         feelings = self.get_feelings(d)
-        header = ('num_of_characters',) + feelings[0]
+        feelings[0] = ('num_of_characters',) + feelings[0]
         feelings[1] = (num_of_characters,) + feelings[1]
         return feelings
 
-    def analyze(self, first_id, last_id, by_member=False):
-        if by_member:
-            return self._analyze_by_member(first_id, last_id)
+    def analyze(self):
+        if self.type == 'both':
+            return [self._analyze(), self._analyze_by_member()]
+        elif self.type == 'member':
+            return [self._analyze_by_member()]
         else:
-            return self._analyze(first_id, last_id)
+            return [self._analyze()]
 
 # d_author_feelings = json.load(open('d_author_feelings.json', 'r'))
 # discussion_feelings = json.load(open('discussion_feelings.json', 'r'))
