@@ -42,8 +42,8 @@ class DiscordAnalyzer:
                                             d['first_id'],
                                             d['last_id'],
                                             type='both').analyze()
-            d_analyzed[0] = ('discussion_0', d_analyzed[0])
-            d_analyzed[1] = ('discussion_1', d_analyzed[1])
+            d_analyzed[0] = (d['name']+'_0', d_analyzed[0])
+            d_analyzed[1] = (d['name']+'_1', d_analyzed[1])
             results += d_analyzed
 
         self.export(results)
