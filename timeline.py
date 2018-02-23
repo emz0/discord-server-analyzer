@@ -1,12 +1,34 @@
 from db.client import PGClient
 from collections import ChainMap
-client = PGClient()
+import settings
 
-q_traffic = """SELECT json_agg(json_build_object('id',id,'posted_at',posted_at,'content',content)) as js FROM (SELECT id, posted_at, content FROM messages
-                   WHERE author_id = 159985870458322944 AND (content LIKE '%left%' OR content LIKE '%great%') order by id asc) as m"""
-q_member_ids = """SELECT json_agg(member_ids) 
-                  FROM (select json_build_object(name, array_agg(id)) as member_ids
-                      FROM members GROUP BY name) AS foo"""
+
+class MemberTraffic:
+
+    def __init__(self):
+        self.client = PGClient()
+        self.jh_bot_id = settings.JH_BOT_ID
+
+
+    def get_member_traffic(self):
+
+        q_traffic = """
+                        WITH bot_messages AS(
+                            SELECT id, posted_at, content
+                            FROM messages
+                            WHERE author_id = %s
+                            AND (content LIKE '%left%' OR content LIKE '%great%')
+                            ORDER BY posted_at)
+                        )
+                        SELECT json_agg(
+                            json_build_object('id',id,'posted_at',posted_at,'content',content)) AS js
+                        FROM bot_messages
+                    """
+        
+        q_member_ids = """
+                        SELECT json_agg(member_ids) 
+                        FROM (select json_build_object(name, array_agg(id)) as member_ids
+                            FROM members GROUP BY name) AS foo"""
 
 member_ids = client.query(q_member_ids).fetchone()[0]
 member_ids = dict(ChainMap(*member_ids))
