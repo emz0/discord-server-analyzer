@@ -96,9 +96,10 @@ class DiscussionAnalyzer:
         text_piece = ''
         texts = []
         for w in text.split(' '):
-            if (current_len + len(w)) <= max_len:
+            if (current_len + len(w)) < max_len:
                 text_piece += w + ' '
             else:
+
                 texts.append(text_piece.strip())
                 text_piece = w + ' '
             current_len = len(text_piece)
@@ -178,6 +179,10 @@ class DiscussionAnalyzer:
         for member_id, d in member_d.items():
             d = self.clean(self.extract_body(d))
             num_of_characters = len(d)
+
+            if num_of_characters < 1:
+                continue
+
             d = self.split_by_len(d)
 
             feelings = self.get_feelings(d)
@@ -211,11 +216,3 @@ class DiscussionAnalyzer:
             return [self._analyze_by_member()]
         else:
             return [self._analyze()]
-
-# d_author_feelings = json.load(open('d_author_feelings.json', 'r'))
-# discussion_feelings = json.load(open('discussion_feelings.json', 'r'))
-
-
-# df_d_a_feelings.to_csv('discussions_author_feelings.csv', sep=',')
-# df_d_feelings.to_csv('discussions_feelings.csv', sep=',')
-
