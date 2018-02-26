@@ -18,14 +18,21 @@ class PGClient:
 
         return cursor
 
-    def save_message(self, *values):
+    def save_message(self, log):
+        id = log.id
+        server_id = log.channel.server.id
+        channel_id = log.channel.id
+        posted_at = log.timestamp
+        member_id = log.author.id
+        content = log.content
+        mentions = [m.id for m in log.mentions]
+
         cursor = self.con.cursor()
         message_exists = cursor.execute("""SELECT count(*) as count FROM
                                         messages WHERE id=%s""",
-                                        (values[0],))
+                                        (id,))
         message_exists = cursor.fetchone()[0]
-        id, server_id, channel_id, posted_at, member_id, \
-            content, mentions = values
+
         mentions = '{{{}}}'.format(','.join(mentions))
         if message_exists > 0:
             cursor.execute("""
@@ -44,15 +51,23 @@ class PGClient:
                 (id, server_id, channel_id, posted_at,
                  member_id, content, mentions))
 
-    def save_member(self, id, name, discriminator):
-        cursor = self.con.cursor()
-        member_exists = cursor.execute("""SELECT name FROM
-                                       members WHERE id = %s""", (id,))
-        member_name = cursor.fetchone()
+    def save_member(self, member):
+        id = member.id
+        name = member.name
+        discriminator = member.discriminator
+        if hasattr(member, 'joined_at'):
+            joined_at = member.joined_at
+            #print(member.joined_at)
+        else:
+            joined_at = None
 
-        if not member_name:
-            cursor.execute("""INSERT INTO members (id, name, discriminator)
-                            VALUES (%s, %s, %s)""", (id, name, discriminator))
+        cursor = self.con.cursor()
+        member_exists = cursor.execute("""SELECT count(*) FROM
+                                       members WHERE id = %s""", (id,))
+        member_exists = cursor.fetchone()[0]
+        if member_exists == 0:
+            cursor.execute("""INSERT INTO members (id, name, discriminator, joined_at)
+                            VALUES (%s, %s, %s, %s)""", (id, name, discriminator, joined_at))
 
         cursor.close()
 

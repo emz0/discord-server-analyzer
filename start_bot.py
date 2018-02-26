@@ -20,7 +20,7 @@ async def on_ready():
                                    [c['id'] for c in channels],
                                    )
 
-    await downloader.save_messages()
+    await downloader.download_data()
 
     print("DONE!")
     client.close()

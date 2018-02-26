@@ -32,11 +32,14 @@ class ContentExtractor:
                             })
         return reactions_dict
 
-    def extract_emotes(self, text, member_id, posted_at):
+    def extract_emotes(self, log):
+        body = log.content
+        member_id = log.author.id
+        posted_at = log.timestamp
         custom_emotes = {}
         unicode_emotes = {}
 
-        for e in re.findall(self.custom_emote_ptrn, text):
+        for e in re.findall(self.custom_emote_ptrn, body):
             e_name, e_id = e[2:-1].split(':')
             if e_id not in custom_emotes:
                 custom_emotes[e_id] = {'name': e_name,
@@ -48,7 +51,7 @@ class ContentExtractor:
                 custom_emotes[e_id]['name'] = e_name
                 custom_emotes[e_id]['count'] += 1
 
-        for e in re.findall(self.unicode_emote_ptrn, text):
+        for e in re.findall(self.unicode_emote_ptrn, body):
             if e not in unicode_emotes:
                 unicode_emotes[e] = {'name': e,
                                     'count': 1,
@@ -61,16 +64,11 @@ class ContentExtractor:
         return {**custom_emotes, **unicode_emotes}
 
     async def extract_content(self, log):
-        posted_at = log.timestamp.strftime("%Y-%m-%d %H:%M:%S")
-        member_name = log.author.name
-        member_id = log.author.id
-        discriminator = log.author.discriminator
-        mentions = [m.id for m in log.mentions]
-        body = str(log.content)
+        # posted_at = log.timestamp.strftime("%Y-%m-%d %H:%M:%S")
         reactions = await self.reactions_to_dict(log.reactions)
-        emotes = self.extract_emotes(body, member_id, posted_at)
-        self.db_client.save_message(log.id,log.channel.server.id, log.channel.id,
-                                posted_at, member_id, body, mentions)
-        self.db_client.save_member(member_id, member_name, discriminator)
+        emotes = self.extract_emotes(log)
+
         self.db_client.save_reactions(reactions)
         self.db_client.save_emotes(emotes)
+        self.db_client.save_message(log)
+        self.db_client.save_member(log.author)

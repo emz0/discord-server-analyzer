@@ -1,5 +1,6 @@
 import asyncio
 from content_extractor import ContentExtractor
+from db.client import PGClient
 
 
 class DiscordDownloader:
@@ -9,12 +10,16 @@ class DiscordDownloader:
         self.channels = channels
         self.client = discord_client
 
-    async def save_messages(self):
+    async def download_data(self):
         client = self.client
         channels = self.channels
 
         server = client.get_server(self.server_id)
         extractor = ContentExtractor(client)
+
+        for m in server.members:
+            PGClient().save_member(m)
+
         chosen_channels = []
 
         if self.channels:
