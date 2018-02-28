@@ -67,7 +67,8 @@ class PGClient:
         member_exists = cursor.fetchone()[0]
         if member_exists == 0:
             cursor.execute("""INSERT INTO members (id, name, discriminator, joined_at)
-                            VALUES (%s, %s, %s, %s)""", (id, name, discriminator, joined_at))
+                            VALUES (%s, %s, %s, %s)""",
+                            (id, name, discriminator, joined_at))
 
         cursor.close()
 
@@ -118,7 +119,7 @@ class PGClient:
                 q_insert = """INSERT INTO emotes
                               (emote_id, member_id, name, posted_at, count)
                                VALUES (%s, %s, %s, %s, %s)"""
-                values = (e_id, props['member_id'], props['name'], props['posted_at'],
-                          props['count'])
+                values = (e_id, props['member_id'], props['name'],
+                          props['posted_at'], props['count'])
 
                 cursor.execute(q_insert, values)
