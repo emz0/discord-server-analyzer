@@ -77,28 +77,6 @@ class SQLStats:
 
         return self.query_stats(q, (settings.IGNORED_MEMBER_IDS,))
 
-    def active_hours(self):
-        q = """
-            SELECT extract(hour from posted_at)::int AS hour_group, count(*)
-            FROM messages
-            WHERE member_id NOT IN %s
-            GROUP BY hour_group
-            ORDER BY hour_group
-            """
-
-        return self.query_stats(q, (settings.IGNORED_MEMBER_IDS,))
-
-    def active_days(self):
-        q = """
-            SELECT extract(isodow from posted_at)::int AS day_group, count(*)
-            FROM messages
-            WHERE member_id NOT IN %s
-            GROUP BY day_group
-            ORDER BY day_group
-            """
-
-        return self.query_stats(q, (settings.IGNORED_MEMBER_IDS,))
-
     def most_used_emotes(self):
         q = """
             WITH _emotes AS (
