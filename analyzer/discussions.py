@@ -26,8 +26,7 @@ class DiscussionAnalyzer:
         self.db_client = PGClient()
         self.MAX_PIECE_LEN = 3000
         self.init_regex_patterns()
-        set_api_key(os.environ.get('PARALLELDOTS_API_KEY'))
-
+        set_api_key('key')
 
     def init_regex_patterns(self):
         unicode_emote_list = map(lambda x: ''.join(x.split()), emoji.UNICODE_EMOJI.keys())

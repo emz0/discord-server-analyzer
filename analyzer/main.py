@@ -28,13 +28,13 @@ class DiscordAnalyzer:
 
     def run(self):
         results = [
-            ('most_reacting', SQLStats().most_reacting()),
-            ('most_reacted_by_count', SQLStats().most_reacted()),
-            ('most_reacted_by_ratio', SQLStats().most_reacted(order_by_i=1)),
-            ('activity_trend', SQLStats().activity_trend()),
-            ('active_hours', SQLStats().active_hours()),
-            ('active_days', SQLStats().active_days()),
-            ('most_used_emotes', SQLStats().most_used_emotes())
+             ('most_reacting', SQLStats().most_reacting()),
+             ('most_reacted_by_count', SQLStats().most_reacted()),
+             ('most_reacted_by_ratio', SQLStats().most_reacted(order_by_i=1)),
+             ('activity_trend', SQLStats().activity_trend()),
+             ('active_hours', SQLStats().active_hours()),
+             ('active_days', SQLStats().active_days()),
+             ('most_used_emotes', SQLStats().most_used_emotes())
         ]
 
         for d in settings.DISCUSSIONS:

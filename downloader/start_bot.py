@@ -25,4 +25,4 @@ async def on_ready():
     print("DONE!")
     client.close()
 
-client.run("--key--", bot=False)
+client.run("key", bot=False)
