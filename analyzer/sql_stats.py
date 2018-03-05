@@ -1,6 +1,6 @@
 import settings
+from analyzer.discussions import DiscussionAnalyzer
 from db.client import PGClient
-from discussions import DiscussionAnalyzer
 
 
 class SQLStats:
@@ -31,12 +31,12 @@ class SQLStats:
         """
         return self.query_stats(q, (settings.IGNORED_MEMBER_IDS, self.limit))
 
-    def most_reacted(self, order_by_i=0):
+    def most_reacted(self, order_by_ratio=False):
         order_by_cols = ['num_of_reactions', 'ratio']
-        if order_by_i == 0:
-            order_by = order_by_cols[0]
-        else:
+        if order_by_ratio:
             order_by = order_by_cols[1]
+        else:
+            order_by = order_by_cols[0]
 
         q = """
             WITH reaction_count AS (

@@ -1,6 +1,6 @@
 import settings
-from db.client import PGClient
 from datetime import timedelta
+from db.client import PGClient
 
 
 class Activity:

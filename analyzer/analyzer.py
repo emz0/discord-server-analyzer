@@ -1,12 +1,13 @@
-from sql_stats import SQLStats
-from discussions import DiscussionAnalyzer
+from analyzer.sql_stats import SQLStats
+from analyzer.discussions import DiscussionAnalyzer
+from analyzer.activity import Activity
 import settings
 import time
 import pathlib
 import csv
 
 
-class DiscordAnalyzer:
+class Analyzer:
 
     def __init__(self):
         pass
@@ -27,14 +28,16 @@ class DiscordAnalyzer:
                     csv_out.writerow(row)
 
     def run(self):
+        sql = SQLStats()
+        act = Activity()
         results = [
-             ('most_reacting', SQLStats().most_reacting()),
-             ('most_reacted_by_count', SQLStats().most_reacted()),
-             ('most_reacted_by_ratio', SQLStats().most_reacted(order_by_i=1)),
-             ('activity_trend', SQLStats().activity_trend()),
-             ('active_hours', SQLStats().active_hours()),
-             ('active_days', SQLStats().active_days()),
-             ('most_used_emotes', SQLStats().most_used_emotes())
+            # ('most_reacting', sql.most_reacting()),
+            # ('most_reacted_by_count', sql.most_reacted()),
+            # ('most_reacted_by_ratio', sql.most_reacted(order_by_ratio=True)),
+            # ('activity_trend', sql.activity_trend()),
+            # ('active_hours', act.per_hour()),
+            # ('active_days', act.per_day()),
+            # ('most_used_emotes', sql.most_used_emotes())
         ]
 
         for d in settings.DISCUSSIONS:
@@ -47,5 +50,3 @@ class DiscordAnalyzer:
             results += d_analyzed
 
         self.export(results)
-
-DiscordAnalyzer().run()

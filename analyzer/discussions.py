@@ -17,6 +17,7 @@ class DiscussionAnalyzer:
 
     def __init__(self, channel_id,
                  first_id, last_id, type):
+        set_api_key(settings.PARALLELDOTS_API_KEY)
         self.channel_id = channel_id
         self.first_id = first_id
         self.last_id = last_id
@@ -26,7 +27,6 @@ class DiscussionAnalyzer:
         self.db_client = PGClient()
         self.MAX_PIECE_LEN = 3000
         self.init_regex_patterns()
-        set_api_key('key')
 
     def init_regex_patterns(self):
         unicode_emote_list = map(lambda x: ''.join(x.split()), emoji.UNICODE_EMOJI.keys())
