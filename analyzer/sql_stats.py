@@ -36,7 +36,7 @@ class SQLStats:
 
         q = """
             WITH reaction_count AS (
-                SELECT m.member_id, count(*) AS num_of_reactions,                        
+                SELECT m.member_id, count(*) AS num_of_reactions,
                 FROM reactions r
                 JOIN messages m ON m.id = r.message_id
                 GROUP BY m.member_id
@@ -81,7 +81,7 @@ class SQLStats:
                 GROUP BY e_name
                 ),
                 _reactions AS (
-                    SELECT lower(e.name) as e_name, count(*) AS r_count 
+                    SELECT lower(e.name) as e_name, count(*) AS r_count
                     FROM reactions r
                     JOIN emotes e ON e.emote_id = r.emote_id
                     WHERE r.member_id NOT IN %s
