@@ -17,16 +17,12 @@ class SQLStats:
 
     def most_reacting(self):
         q = """
-            WITH members_count AS (
-                SELECT unnest(members) AS member_id, count(*) r_count
-                FROM reactions
-                GROUP BY member_id
-                )
-            SELECT m.name, mc.r_count
-            FROM members_count mc
-            JOIN members m ON m.id = mc.member_id
-            WHERE mc.member_id NOT IN %s
-            ORDER BY r_count DESC
+            SELECT r.member_id, m.name, count(*)
+            FROM reactions r
+            JOIN members m ON r.member_id = m.id
+            WHERE r.member_id NOT IN %s
+            GROUP BY r.member_id, m.name
+            ORDER BY count DESC
             LIMIT %s
         """
         return self.query_stats(q, (settings.IGNORED_MEMBER_IDS, self.limit))
@@ -40,8 +36,7 @@ class SQLStats:
 
         q = """
             WITH reaction_count AS (
-                SELECT sum(cardinality(r.members)) AS num_of_reactions,
-                        m.member_id
+                SELECT m.member_id, count(*) AS num_of_reactions,                        
                 FROM reactions r
                 JOIN messages m ON m.id = r.message_id
                 GROUP BY m.member_id
@@ -85,18 +80,9 @@ class SQLStats:
                 WHERE member_id NOT IN %s
                 GROUP BY e_name
                 ),
-                filtered_reactions AS (
-                    SELECT r.emote_id, r.members FROM reactions r
-                    JOIN messages m ON m.id = r.message_id
-                    WHERE m.member_id NOT IN %s
-                ),
-                u_reactions AS (
-                    SELECT emote_id, unnest(members) AS member_id
-                    FROM filtered_reactions
-                ),
                 _reactions AS (
-                    SELECT lower(e.name) AS e_name, count(*) AS r_count
-                    FROM u_reactions r
+                    SELECT lower(e.name) as e_name, count(*) AS r_count 
+                    FROM reactions r
                     JOIN emotes e ON e.emote_id = r.emote_id
                     WHERE r.member_id NOT IN %s
                     GROUP BY e_name
@@ -105,9 +91,9 @@ class SQLStats:
                 FROM _emotes e
                 JOIN _reactions r ON r.e_name = e.e_name
                 ORDER BY total DESC
-                LIMIT %s
-        """
-        ignored_m = 3 * (settings.IGNORED_MEMBER_IDS,)
+                LIMIT %s;
+            """
+        ignored_m = 2 * (settings.IGNORED_MEMBER_IDS,)
         values = (*ignored_m, self.limit)
 
         return self.query_stats(q, values)
