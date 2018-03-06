@@ -36,7 +36,7 @@ class SQLStats:
 
         q = """
             WITH reaction_count AS (
-                SELECT m.member_id, count(*) AS num_of_reactions,
+                SELECT m.member_id, count(*) AS num_of_reactions
                 FROM reactions r
                 JOIN messages m ON m.id = r.message_id
                 GROUP BY m.member_id
