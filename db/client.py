@@ -27,15 +27,14 @@ class PGClient:
         content = log.content
         mentions = [m.id for m in log.mentions]
 
-        cursor = self.con.cursor()
-        message_exists = cursor.execute("""SELECT count(*) as count FROM
+        message_exists = self.query("""SELECT count(*) as count FROM
                                         messages WHERE id=%s""",
                                         (id,))
-        message_exists = cursor.fetchone()[0]
+        message_exists = message_exists.fetchone()[0]
 
         mentions = '{{{}}}'.format(','.join(mentions))
         if message_exists > 0:
-            cursor.execute("""
+            self.query("""
                 UPDATE messages
                 SET server_id= %s, channel_id = %s, posted_at = %s,
                 member_id = %s, content = %s, mentions = %s
@@ -43,7 +42,7 @@ class PGClient:
             """, (server_id, channel_id, posted_at, member_id,
                   content, mentions, id))
         else:
-            cursor.execute("""
+            self.query("""
                 INSERT INTO messages
                 (id, server_id, channel_id, posted_at,
                 member_id, content, mentions)
@@ -61,39 +60,51 @@ class PGClient:
         else:
             joined_at = None
 
-        cursor = self.con.cursor()
-        member_exists = cursor.execute("""SELECT count(*) FROM
+        member_exists = self.query("""SELECT count(*) FROM
                                        members WHERE id = %s""", (id,))
-        member_exists = cursor.fetchone()[0]
+        member_exists = member_exists.fetchone()[0]
         if member_exists == 0:
-            cursor.execute("""INSERT INTO members (id, name, discriminator, joined_at)
-                            VALUES (%s, %s, %s, %s)""",
-                            (id, name, discriminator, joined_at))
-
-        cursor.close()
+            self.query("""INSERT INTO members (id, name, discriminator, joined_at)
+                          VALUES (%s, %s, %s, %s)""",
+                        (id, name, discriminator, joined_at))
 
     def save_reactions(self, reactions):
-        cursor = self.con.cursor()
-        for r in reactions:
-            members = '{{{}}}'.format(','.join(r['members']))
-            reaction_exists = cursor.execute("""SELECT id FROM reactions
-                                             WHERE message_id = %s
-                                             AND emote_id = %s""",
-                                             (r['message_id'], r['emote_id']))
-            reaction_exists = cursor.fetchone()
-            if reaction_exists:
-                cursor.execute("""UPDATE reactions
-                               SET members = %s
-                                 WHERE id = %s""",
-                               (members, reaction_exists[0]))
+        for current_r in reactions:
+            q_existing_r = """
+                SELECT id, member_id::varchar
+                FROM reactions
+                WHERE message_id = %s
+                AND emote_id = %s
+            """
+            existing_r = self.query(q_existing_r,
+                                    (current_r['message_id'],
+                                     current_r['emote_id']
+                                    )).fetchall()
 
-            else:
-                cursor.execute("""INSERT INTO reactions (message_id, emote_id,
-                               members) VALUES (%s, %s, %s)""",
-                               (r['message_id'], r['emote_id'], members))
+            existing_r_members = [str(r[1]) for r in existing_r]
+            new_r_members = [m_id for m_id in current_r['members']
+                                if m_id not in existing_r_members]
+            deleted_r_ids = []
+            for e_r in existing_r:
+
+                if e_r[1] not in current_r['members']:
+
+                    deleted_r_ids.append(e_r[0])
+
+            if deleted_r_ids:
+                self.query("DELETE FROM reactions WHERE id IN %s",
+                           (tuple(deleted_r_ids), ))
+
+            for m_id in new_r_members:
+                insert_q = """
+                        INSERT INTO reactions
+                        (message_id, emote_id, member_id)
+                        VALUES (%s, %s, %s)"""
+                values = (current_r['message_id'], current_r['emote_id'], m_id)
+
+                self.query(insert_q, values)
 
     def save_emotes(self, emotes):
-        cursor = self.con.cursor()
         for e_id, props in emotes.items():
             q_existing_id = """
                             SELECT id FROM emotes
@@ -101,8 +112,7 @@ class PGClient:
                             """
             values = (e_id, props['member_id'])
 
-            cursor.execute(q_existing_id, values)
-            existing_id = cursor.fetchone()
+            existing_id = self.query(q_existing_id, values).fetchone()
 
             if existing_id:
                 q_update = """
@@ -113,7 +123,7 @@ class PGClient:
 
                 values = (props['count'], props['name'], existing_id[0])
 
-                cursor.execute(q_update, values)
+                self.query(q_update, values)
 
             else:
                 q_insert = """INSERT INTO emotes
@@ -122,4 +132,4 @@ class PGClient:
                 values = (e_id, props['member_id'], props['name'],
                           props['posted_at'], props['count'])
 
-                cursor.execute(q_insert, values)
+                self.query(q_insert, values)
