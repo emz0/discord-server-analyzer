@@ -10,6 +10,7 @@ def run(argv):
     elif argv == 'analyzer':
         Analyzer().run()
 
+
 if __name__ == '__main__':
     if len(sys.argv) < 2:
         run('analyzer')
