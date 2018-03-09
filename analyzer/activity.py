@@ -32,11 +32,13 @@ class Activity:
             LIMIT 1
         """
 
-        grouped_days = self.client.query(q_grouped_days,(settings.IGNORED_MEMBER_IDS,)).fetchall()
+        values = (settings.IGNORED_MEMBER_IDS,)
+
+        grouped_days = self.client.query(q_grouped_days, values).fetchall()
         sums_per_day = [s[1] for s in grouped_days]
 
-        date_from = self.client.query(q_first_msg, (settings.IGNORED_MEMBER_IDS,)).fetchall()[0][0]
-        date_to = self.client.query(q_last_msg, (settings.IGNORED_MEMBER_IDS,)).fetchall()[0][0]
+        date_from = self.client.query(q_first_msg, values).fetchall()[0][0]
+        date_to = self.client.query(q_last_msg, values).fetchall()[0][0]
 
         avg_activity = self.get_avg_activity(date_from=date_from,
                                              date_to=date_to,
@@ -67,12 +69,13 @@ class Activity:
             ORDER BY posted_at DESC
             LIMIT 1
         """
+        values = (settings.IGNORED_MEMBER_IDS,)
 
-        grouped_hours = self.client.query(q_grouped_hours,(settings.IGNORED_MEMBER_IDS,)).fetchall()
+        grouped_hours = self.client.query(q_grouped_hours, values).fetchall()
         sums_per_hour = [s[1] for s in grouped_hours]
 
-        date_from = self.client.query(q_first_msg, (settings.IGNORED_MEMBER_IDS,)).fetchall()[0][0]
-        date_to = self.client.query(q_last_msg, (settings.IGNORED_MEMBER_IDS,)).fetchall()[0][0]
+        date_from = self.client.query(q_first_msg, values).fetchall()[0][0]
+        date_to = self.client.query(q_last_msg, values).fetchall()[0][0]
 
         avg_activity = self.get_avg_activity(date_from=date_from,
                                              date_to=date_to,
@@ -80,7 +83,8 @@ class Activity:
                                              time_unit='hour')
         return avg_activity
 
-    def get_avg_activity(self, date_from, date_to, sums_per_segment, time_unit):
+    def get_avg_activity(self, date_from, date_to,
+                         sums_per_segment, time_unit):
         if time_unit == 'day':
             time_segments = [0] * 7
             td = date_to - date_from + timedelta(days=1)

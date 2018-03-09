@@ -13,6 +13,8 @@ class Analyzer:
         pass
 
     def export(self, data):
+        if not data:
+            return
         output_dir = '{}/{}'.format(settings.OUTPUT_DIR,
                                     int(time.time()))
         pathlib.Path(output_dir).mkdir(parents=True, exist_ok=True)
@@ -31,13 +33,14 @@ class Analyzer:
         sql = SQLStats()
         act = Activity()
         results = [
-            # ('most_reacting', sql.most_reacting()),
-            # ('most_reacted_by_count', sql.most_reacted()),
-            # ('most_reacted_by_ratio', sql.most_reacted(order_by_ratio=True)),
-            # ('activity_trend', sql.activity_trend()),
-            # ('active_hours', act.per_hour()),
-            # ('active_days', act.per_day()),
-            # ('most_used_emotes', sql.most_used_emotes())
+            ('most_reacting', sql.most_reacting()),
+            ('most_reacted_by_count', sql.most_reacted()),
+            ('most_reacted_by_ratio', sql.most_reacted(order_by_ratio=True)),
+            ('activity_trend', sql.activity_trend()),
+            ('active_hours', act.per_hour()),
+            ('active_days', act.per_day()),
+            ('most_used_emotes', sql.most_used_emotes()),
+            ('most_mentioned_member', sql.most_mentioned_member())
         ]
 
         for d in settings.DISCUSSIONS:

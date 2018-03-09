@@ -10,7 +10,8 @@ import numpy as np
 import json
 import os
 import settings
-from paralleldots import set_api_key, get_api_key, sentiment, similarity, emotion
+from paralleldots import (emotion, get_api_key, sentiment,
+                          set_api_key, similarity)
 
 
 class DiscussionAnalyzer:
@@ -29,8 +30,10 @@ class DiscussionAnalyzer:
         self.init_regex_patterns()
 
     def init_regex_patterns(self):
-        unicode_emote_list = map(lambda x: ''.join(x.split()), emoji.UNICODE_EMOJI.keys())
-        self.unicode_emote_ptrn = re.compile('|'.join(re.escape(p) for p in unicode_emote_list))
+        unicode_emote_list = map(lambda x: ''.join(x.split()),
+                                 emoji.UNICODE_EMOJI.keys())
+        self.unicode_emote_ptrn = re.compile('|'.join(re.escape(p)
+                                             for p in unicode_emote_list))
         self.custom_emote_ptrn = re.compile('<:\w+:[0-9]+>')
         self.tag_ptrn = re.compile('<@!?[0-9]+>')
         self.url_ptrn = re.compile('http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+')
@@ -160,9 +163,11 @@ class DiscussionAnalyzer:
                     self.get_avg_feelings(t_feelings['emotion']))
                 )
 
-        result = [(*t_feelings['sentiment'].keys(), *t_feelings['emotion'].keys()),
-                  (*t_feelings['sentiment'].values(), *t_feelings['emotion'].values())
-                ]
+        result = [(*t_feelings['sentiment'].keys(),
+                   *t_feelings['emotion'].keys()),
+                  (*t_feelings['sentiment'].values(),
+                   *t_feelings['emotion'].values())
+                  ]
         return result
 
     def _member_name_by_id(self, member_id):
@@ -187,7 +192,9 @@ class DiscussionAnalyzer:
             feelings = self.get_feelings(d)
 
             if not results:
-                header = ('member_id', 'member_name', 'num_of_characters') + feelings[0]
+                header = ('member_id',
+                          'member_name',
+                          'num_of_characters') + feelings[0]
                 results.append(header)
 
             member_name = self._member_name_by_id(member_id)

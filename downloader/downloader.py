@@ -1,19 +1,22 @@
 import discord
 import asyncio
 import settings
+import logging
 from downloader.data_processor import DataProcessor
 from db.client import PGClient
 
+logging.basicConfig(level=logging.INFO)
 discord_client = discord.Client()
+
 
 @discord_client.event
 async def on_ready():
     server_id = settings.DISCORD_SERVER_ID
     channels = settings.DISCORD_CHANNELS
-    print('Logged in as')
-    print(discord_client.user.name)
-    print(discord_client.user.id)
-    print('------')
+    logging.info('Logged in as')
+    logging.info(discord_client.user.name)
+    logging.info(discord_client.user.id)
+    logging.info('------')
     processor = DataProcessor(
                             discord_client,
                             server_id,
@@ -21,7 +24,7 @@ async def on_ready():
                             )
     await processor.collect_data()
 
-    print("DONE!")
+    logging.info("DONE!")
     discord_client.close()
 
 

@@ -11,7 +11,6 @@ def run(argv):
         Analyzer().run()
 
 if __name__ == '__main__':
-    print(len(sys.argv))
     Downloader.discord_client.close()
     if len(sys.argv) < 2:
         run('analyzer')

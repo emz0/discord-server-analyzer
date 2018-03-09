@@ -79,11 +79,11 @@ class PGClient:
             existing_r = self.query(q_existing_r,
                                     (current_r['message_id'],
                                      current_r['emote_id']
-                                    )).fetchall()
+                                     )).fetchall()
 
             existing_r_members = [str(r[1]) for r in existing_r]
             new_r_members = [m_id for m_id in current_r['members']
-                                if m_id not in existing_r_members]
+                             if m_id not in existing_r_members]
             deleted_r_ids = []
             for e_r in existing_r:
 

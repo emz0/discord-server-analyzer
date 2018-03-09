@@ -7,8 +7,8 @@ con.autocommit = True
 cur = self.con.cursor()
 
 
-def create_tables(self):
-    table_message = """
+def create_tables():
+    messages = """
         CREATE TABLE messages (
             id BIGINT PRIMARY KEY NOT NULL,
             server_id BIGINT NOT NULL,
@@ -20,16 +20,16 @@ def create_tables(self):
         )
     """
 
-    table_reactions = """
+    reactions = """
         CREATE TABLE reactions (
             id SERIAL PRIMARY KEY NOT NULL,
             message_id BIGINT NOT NULL,
             emote_id VARCHAR(64) NOT NULL,
-            members BIGINT[]
+            member_id BIGINT NOT NULL
         )
     """
 
-    table_members = """
+    members = """
         CREATE TABLE members (
             id BIGINT PRIMARY KEY NOT NULL,
             name VARCHAR(64),
@@ -37,7 +37,7 @@ def create_tables(self):
         )
     """
 
-    table_emotes = """
+    emotes = """
         CREATE TABLE emotes (
             id SERIAL PRIMARY KEY NOT NULL,
             emote_id VARCHAR(64) NOT NULL,
@@ -51,10 +51,10 @@ def create_tables(self):
     # self.cur.execute("DROP TABLE IF EXISTS messages")
     # self.cur.execute("DROP TABLE IF EXISTS reactions")
     # self.cur.execute("DROP TABLE IF EXISTS members")
-    cur.execute("DROP TABLE IF EXISTS emotes")
-    # self.cur.execute(table_message)
-    # self.cur.execute(table_reactions)
-    # self.cur.execute(table_members)
+    # cur.execute("DROP TABLE IF EXISTS emotes")
+    cur.execute(messages)
+    cur.execute(reactions)
+    cur.execute(members)
     cur.execute(table_emotes)
 
 
