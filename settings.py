@@ -1,24 +1,20 @@
-DB_CONNECTION = 'postgresql://postgres:123456@localhost/jh'
+DB_CONNECTION = 'postgresql://<username>:<password>@<host>/<dbname>'
 
 DISCORD_SERVER_ID = '<server_id>'
 DISCORD_CHANNELS = [
-    {'name': 'general', 'id': '263420076919750676'},
-    {'name': 'mapping', 'id': '365883171545546772'},
-    {'name': 'nsfw', 'id': '391225585898356736'}
+    {'name': '<channel_name>', 'id': '<channel_id>'}
 ]
 
-JH_BOT_ID = 159985870458322944
+#Add IDs of members that you wish not to include in the statistics. For example - server bots.
 IGNORED_MEMBER_IDS = (
-    155149108183695360,
-    349547918966915073,
-    159985870458322944
+
 )
 
 DISCUSSIONS = [
-    # {'name': 'd1',
-    #  'channel_id': 263420076919750676,
-    #  'first_id': 372759366392348683,
-    #  'last_id': 372782278138396673,
+    # {'name': '<discussion_name>',
+    #  'channel_id': <channel_id>,
+    #  'first_id': <first_message_id>,
+    #  'last_id': <last_message_id,
     # }
 
 ]
