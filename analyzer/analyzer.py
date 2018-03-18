@@ -12,23 +12,6 @@ class Analyzer:
     def __init__(self):
         pass
 
-    def export(self, data):
-        if not data:
-            return
-        output_dir = '{}/{}'.format(settings.OUTPUT_DIR,
-                                    int(time.time()))
-        pathlib.Path(output_dir).mkdir(parents=True, exist_ok=True)
-
-        for res in data:
-            name = res[0]
-            values = res[1]
-            print('exporting:' + name)
-            filename = '{}/{}.csv'.format(output_dir, name)
-            with open(filename, 'w') as out:
-                csv_out = csv.writer(out)
-                for row in values:
-                    csv_out.writerow(row)
-
     def run(self):
         sql = SQLStats()
         act = Activity()
@@ -53,3 +36,23 @@ class Analyzer:
             results += d_analyzed
 
         self.export(results)
+
+    def export(self, data):
+        """
+        Export data to an output folder in csv format
+        """
+        if not data:
+            return
+        output_dir = '{}/{}'.format(settings.OUTPUT_DIR,
+                                    int(time.time()))
+        pathlib.Path(output_dir).mkdir(parents=True, exist_ok=True)
+
+        for res in data:
+            name = res[0]
+            values = res[1]
+            print('exporting:' + name)
+            filename = '{}/{}.csv'.format(output_dir, name)
+            with open(filename, 'w') as out:
+                csv_out = csv.writer(out)
+                for row in values:
+                    csv_out.writerow(row)

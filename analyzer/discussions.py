@@ -38,22 +38,51 @@ class DiscussionAnalyzer:
         self.tag_ptrn = re.compile('<@!?[0-9]+>')
         self.url_ptrn = re.compile('http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+')
 
-    def clean(self, t):
-        t = str(t)
+    def analyze(self):
+        if self.type == 'both':
+            return [self.__analyze(), self.__analyze_by_member()]
+        elif self.type == 'member':
+            return [self.__analyze_by_member()]
+        else:
+            return [self.__analyze()]
 
-        emotes = re.findall(self.custom_emote_ptrn, t)
-        for e in emotes:
-            e_new = e.split(':')[1].lower()
-            t = re.sub(e, '', t)
-        t = self.unicode_emote_ptrn.sub('', t)
-        t = re.sub(self.url_ptrn, '', t)
-        t = re.sub(self.tag_ptrn, '', t)
-        t = re.sub('\n', ' ', t)
+    def __analyze(self):
+            d = self.get_messages()
+            d = self.clean(self.extract_body(d))
+            num_of_characters = len(d)
+            d = self.split_by_len(d)
 
-        t = re.sub('"', '', t)
-        t = re.sub('\s+', ' ', t)
+            feelings = self.get_feelings(d)
+            feelings[0] = ('num_of_characters',) + feelings[0]
+            feelings[1] = (num_of_characters,) + feelings[1]
+            return feelings
 
-        return t.strip()
+    def __analyze_by_member(self):
+        member_d = self.get_messages(by_member=True)
+        results = []
+        for member_id, d in member_d.items():
+            d = self.clean(self.extract_body(d))
+            num_of_characters = len(d)
+
+            if num_of_characters < 1:
+                continue
+
+            d = self.split_by_len(d)
+
+            feelings = self.get_feelings(d)
+
+            if not results:
+                header = ('member_id',
+                          'member_name',
+                          'num_of_characters') + feelings[0]
+                results.append(header)
+
+            member_name = self.__member_name_by_id(member_id)
+            row = (member_id, member_name, num_of_characters) + feelings[1]
+
+            results.append(row)
+
+        return results
 
     def get_messages(self, by_member=False):
         q_messages = """SELECT json_build_object(
@@ -92,37 +121,39 @@ class DiscussionAnalyzer:
     def extract_body(self, messages):
         return ' '.join([m['content'] for m in messages])
 
+    def clean(self, t):
+            t = str(t)
+
+            emotes = re.findall(self.custom_emote_ptrn, t)
+            for e in emotes:
+                e_new = e.split(':')[1].lower()
+                t = re.sub(e, '', t)
+            t = self.unicode_emote_ptrn.sub('', t)
+            t = re.sub(self.url_ptrn, '', t)
+            t = re.sub(self.tag_ptrn, '', t)
+            t = re.sub('\n', ' ', t)
+
+            t = re.sub('"', '', t)
+            t = re.sub('\s+', ' ', t)
+
+            return t.strip()
+
     def split_by_len(self, text):
-        max_len = self.MAX_PIECE_LEN
-        current_len = 0
-        text_piece = ''
-        texts = []
-        for w in text.split(' '):
-            if (current_len + len(w)) < max_len:
-                text_piece += w + ' '
-            else:
+            max_len = self.MAX_PIECE_LEN
+            current_len = 0
+            text_piece = ''
+            texts = []
+            for w in text.split(' '):
+                if (current_len + len(w)) < max_len:
+                    text_piece += w + ' '
+                else:
 
-                texts.append(text_piece.strip())
-                text_piece = w + ' '
-            current_len = len(text_piece)
-        texts.append(text_piece.strip())
+                    texts.append(text_piece.strip())
+                    text_piece = w + ' '
+                current_len = len(text_piece)
+            texts.append(text_piece.strip())
 
-        return texts
-
-    def scale_to_one(self, feelings):
-        keys = feelings.keys()
-        values = np.array(list(feelings.values()))
-        values = values / values.sum()
-
-        return dict(zip(keys, values))
-
-    def get_avg_feelings(self, feelings):
-        len_feelings = len(feelings)
-        avg_feelings = {}
-        for f, vals in feelings.items():
-            avg_feelings[f] = sum([v for v in vals]) / len_feelings
-
-        return avg_feelings
+            return texts
 
     def get_feelings(self, texts):
         t_feelings = {
@@ -170,55 +201,24 @@ class DiscussionAnalyzer:
                   ]
         return result
 
-    def _member_name_by_id(self, member_id):
-        q = "SELECT name FROM members WHERE id = %s"
-        cursor = self.db_client.query(q, (member_id,))
-        name = cursor.fetchone()[0]
+    def get_avg_feelings(self, feelings):
+        len_feelings = len(feelings)
+        avg_feelings = {}
+        for f, vals in feelings.items():
+            avg_feelings[f] = sum([v for v in vals]) / len_feelings
 
-        return name
+        return avg_feelings
 
-    def _analyze_by_member(self):
-        member_d = self.get_messages(by_member=True)
-        results = []
-        for member_id, d in member_d.items():
-            d = self.clean(self.extract_body(d))
-            num_of_characters = len(d)
+    def scale_to_one(self, feelings):
+        keys = feelings.keys()
+        values = np.array(list(feelings.values()))
+        values = values / values.sum()
 
-            if num_of_characters < 1:
-                continue
+        return dict(zip(keys, values))
 
-            d = self.split_by_len(d)
+    def __member_name_by_id(self, member_id):
+            q = "SELECT name FROM members WHERE id = %s"
+            cursor = self.db_client.query(q, (member_id,))
+            name = cursor.fetchone()[0]
 
-            feelings = self.get_feelings(d)
-
-            if not results:
-                header = ('member_id',
-                          'member_name',
-                          'num_of_characters') + feelings[0]
-                results.append(header)
-
-            member_name = self._member_name_by_id(member_id)
-            row = (member_id, member_name, num_of_characters) + feelings[1]
-
-            results.append(row)
-
-        return results
-
-    def _analyze(self):
-        d = self.get_messages()
-        d = self.clean(self.extract_body(d))
-        num_of_characters = len(d)
-        d = self.split_by_len(d)
-
-        feelings = self.get_feelings(d)
-        feelings[0] = ('num_of_characters',) + feelings[0]
-        feelings[1] = (num_of_characters,) + feelings[1]
-        return feelings
-
-    def analyze(self):
-        if self.type == 'both':
-            return [self._analyze(), self._analyze_by_member()]
-        elif self.type == 'member':
-            return [self._analyze_by_member()]
-        else:
-            return [self._analyze()]
+            return name
