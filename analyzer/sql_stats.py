@@ -10,6 +10,10 @@ class SQLStats:
         self.limit = settings.RESULT_LIMIT
 
     def query_stats(self, q, values):
+        """
+        Execute query and return list
+        of tuples
+        """
         cursor = self.client.query(q, values)
         column_names = list(zip(*cursor.description))[0]
 

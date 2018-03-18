@@ -11,6 +11,9 @@ discord_client = discord.Client()
 
 @discord_client.event
 async def on_ready():
+    """
+    Start downloading data when discord client is ready
+    """
     server_id = settings.DISCORD_SERVER_ID
     channels = settings.DISCORD_CHANNELS
     logging.info('Logged in as')

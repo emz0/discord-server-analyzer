@@ -8,6 +8,9 @@ cur = self.con.cursor()
 
 
 def create_tables():
+    """
+    Create tables in database
+    """
     messages = """
         CREATE TABLE messages (
             id BIGINT PRIMARY KEY NOT NULL,

@@ -9,6 +9,9 @@ class Activity:
         self.client = PGClient()
 
     def per_day(self):
+        """
+        Return average amount of messages per day in a week
+        """
         q_grouped_days = """
             SELECT extract(isodow from posted_at)::int AS day_group, count(*)
             FROM messages
@@ -47,6 +50,9 @@ class Activity:
         return avg_activity
 
     def per_hour(self):
+        """
+        Return average amount of messages per hour in a day
+        """
         q_grouped_hours = """
             SELECT extract(hour from posted_at)::int AS hour_group, count(*)
             FROM messages
@@ -85,6 +91,10 @@ class Activity:
 
     def get_avg_activity(self, date_from, date_to,
                          sums_per_segment, time_unit):
+        """
+        Return average amount of messages
+        per the chosen time segment (hour or day)
+        """
         if time_unit == 'day':
             time_segments = [0] * 7
             td = date_to - date_from + timedelta(days=1)

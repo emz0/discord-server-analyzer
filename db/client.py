@@ -10,6 +10,9 @@ class PGClient:
         self.con.autocommit = True
 
     def query(self, q, values=None):
+        """
+        Execute query
+        """
         cursor = self.con.cursor()
         if values:
             cursor.execute(q, values)
@@ -19,6 +22,9 @@ class PGClient:
         return cursor
 
     def save_message(self, log):
+        """
+        Save or update a message in db
+        """
         id = log.id
         server_id = log.channel.server.id
         channel_id = log.channel.id
@@ -51,6 +57,9 @@ class PGClient:
                  member_id, content, mentions))
 
     def save_member(self, member):
+        """
+        Save member to db
+        """
         id = member.id
         name = member.name
         discriminator = member.discriminator
@@ -69,6 +78,9 @@ class PGClient:
                         (id, name, discriminator, joined_at))
 
     def save_reactions(self, reactions):
+        """
+        Save reaction to db
+        """
         for current_r in reactions:
             q_existing_r = """
                 SELECT id, member_id::varchar
@@ -105,6 +117,9 @@ class PGClient:
                 self.query(insert_q, values)
 
     def save_emotes(self, emotes):
+        """
+        Save emotes to db
+        """
         for e_id, props in emotes.items():
             q_existing_id = """
                             SELECT id FROM emotes

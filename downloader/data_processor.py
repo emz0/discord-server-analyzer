@@ -26,6 +26,9 @@ class DataProcessor:
         self.custom_emote_ptrn = re.compile('<:\w+:[0-9]+>')
 
     async def collect_data(self):
+        """
+        Download messages from server
+        """
         client = self.client
         channels = self.channels
         logging.info('server id: {}'.format(self.server_id))
@@ -59,34 +62,43 @@ class DataProcessor:
                 )
 
     async def save_data(self, log):
-            reactions = await self.reactions_to_dict(log.reactions)
-            emotes = self.extract_emotes(log)
+        """
+        Process and save downloaded data
+        """
+        reactions = await self.reactions_to_dict(log.reactions)
+        emotes = self.extract_emotes(log)
 
-            self.db_client.save_reactions(reactions)
-            self.db_client.save_emotes(emotes)
-            self.db_client.save_message(log)
-            self.db_client.save_member(log.author)
+        self.db_client.save_reactions(reactions)
+        self.db_client.save_emotes(emotes)
+        self.db_client.save_message(log)
+        self.db_client.save_member(log.author)
 
     async def reactions_to_dict(self, reactions):
-            reactions_dict = []
-            for r in reactions:
-                r_members = []
-                if r.custom_emoji:
-                    emote = r.emoji.id
-                else:
-                    emote = r.emoji
+        """
+        Transform reactions to list of dictionaries
+        """
+        reactions_dict = []
+        for r in reactions:
+            r_members = []
+            if r.custom_emoji:
+                emote = r.emoji.id
+            else:
+                emote = r.emoji
 
-                members = \
-                    await self.discord_client.get_reaction_users(r, limit=100)
-                members = [m.id for m in members]
+            members = \
+                await self.discord_client.get_reaction_users(r, limit=100)
+            members = [m.id for m in members]
 
-                reactions_dict.append({'message_id': r.message.id,
-                                       'emote_id': emote,
-                                       'members': members,
-                                       })
-            return reactions_dict
+            reactions_dict.append({'message_id': r.message.id,
+                                    'emote_id': emote,
+                                    'members': members,
+                                    })
+        return reactions_dict
 
     def extract_emotes(self, log):
+        """
+        Compile regex patterns
+        """
         body = log.content
         member_id = log.author.id
         posted_at = log.timestamp

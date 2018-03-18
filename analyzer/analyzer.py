@@ -13,6 +13,9 @@ class Analyzer:
         pass
 
     def run(self):
+        """
+        Run analysis and export results to an output folder
+        """
         sql = SQLStats()
         act = Activity()
         results = [
